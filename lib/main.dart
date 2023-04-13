@@ -1,14 +1,23 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_first_demo/register_feature/Screen/RegisterScreen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:sizer/sizer.dart';
 
-import 'StartApp.dart';
-import 'firebase_options.dart';
+import 'CheckLoginOrNot.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    systemNavigationBarColor: Color(0xFF201a31), // navigation bar color
+    statusBarColor: Color(0xFF201a31),
+  )); // status bar color
+
   FlutterError.onError = (details) {
     if (kDebugMode) {
       FlutterError.dumpErrorToConsole(details);
@@ -19,8 +28,8 @@ void main() {
     }
   };
   runZonedGuarded(
-    () {
-      runApp(const StartApp());
+    () async {
+      runApp(MaterialApp(home: MyApp()));
     },
     (error, stack) {
       debugPrint('caught Dart error');
@@ -41,12 +50,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return MediaQuery(
+      data: MediaQuery.of(context),
+      child: ScaffoldMessenger(
+        key: scaffoldMessengerKey,
+        child: Sizer(
+            builder: (context, orientation, deviceType) => RegisterScreen()),
       ),
-      home: const StartApp(),
     );
   }
 }

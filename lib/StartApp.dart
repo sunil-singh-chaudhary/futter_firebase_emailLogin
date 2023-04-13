@@ -1,9 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_first_demo/Auth.dart';
+import 'package:firebase_first_demo/register_feature/core/Auth.dart';
+import 'package:firebase_first_demo/LoginPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'firebase_options.dart';
 
 class StartApp extends StatelessWidget {
@@ -37,10 +37,13 @@ class _FireBaseSetUpState extends State<FireBaseSetUp> {
   final TextEditingController _email_controller = TextEditingController();
   final TextEditingController _pswd_controller = TextEditingController();
   final Auth _auth = Auth();
+  final _storage = const FlutterSecureStorage();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: const Text('Register Page'),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -74,7 +77,14 @@ class _FireBaseSetUpState extends State<FireBaseSetUp> {
                 if (users == null) {
                   print('error sign in');
                 } else {
-                  print(' sign in success -- > ${users.uid}');
+                  _storage.write(key: 'is_register', value: users.email);
+                  print(
+                      ' sign in success -- > ${_auth.users}'); //adding getter to access
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return const GoogleLoginButton();
+                    },
+                  );
                 }
               },
               child: const Text('Register'),
