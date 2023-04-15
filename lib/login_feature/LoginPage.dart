@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 
-import 'register_feature/core/Auth.dart';
-import 'HomeScreen.dart';
-import 'firebase_options.dart';
+import '../mainScreen/HomeScreen.dart';
+import '../firebase_options.dart';
+import '../register_feature/core/Auth.dart';
 
 class GoogleLoginButton extends StatefulWidget {
   const GoogleLoginButton({super.key});

@@ -1,13 +1,15 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'package:firebase_first_demo/register_feature/core/Auth.dart';
-import 'package:firebase_first_demo/register_feature/core/AuthException.dart';
-import 'package:flutter/foundation.dart';
+import 'package:firebase_first_demo/register_feature/core/showSnackbar.dart';
+import 'package:firebase_first_demo/register_feature/utils/preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
-import '../../login_screen.dart';
+import '../../login_feature/login_screen.dart';
 import '../utils/maps.dart';
+import '../utils/validatePhoneNumber.dart';
 import '../widget/BottomText.dart';
 import '../widget/CreateAcc.dart';
 import '../widget/ErroViewField.dart';
@@ -18,8 +20,7 @@ import '../widget/TextStylish.dart';
 import '../widget/appbardesign.dart';
 import '../widget/prefixIconData.dart';
 
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-    GlobalKey<ScaffoldMessengerState>();
+final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 enum FormFieldKey {
   name,
@@ -27,13 +28,11 @@ enum FormFieldKey {
   password,
   phone,
   confirm_password,
-
-  // Add more form field keys as needed
 }
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
-
+  RegisterScreen({super.key, required this.preference});
+  SharedPreferences preference;
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
@@ -46,8 +45,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool isTextFieldFocused_eml = false; // Track focused state of TextFormField
   bool isTextFieldFocused_pswd = false; // Track focused state of TextFormField
   bool isTextFieldFocused_cnpswd = false;
+
   final globalkey = GlobalKey<FormState>();
-  Auth _auth = Auth();
+  final _auth = Auth();
   @override
   void initState() {
     super.initState();
@@ -92,8 +92,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: const Color(0xFF201a31),
         body: Column(
           children: [
-            const CreateAccount(),
-            const fillTitle(),
+            CreateAccount(title: 'Create Account'),
+            fillTitle(title: 'Please fill the input below'),
             SizedBox(
               height: 4.h,
             ),
@@ -169,32 +169,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             sigUpText(
+              titletext: 'SignUp',
               click_btn_callback: (context) {
                 globalkey.currentState!.save();
                 //first save then validate if edit form after submit
                 bool containsEmptyValue = _formData.containsValue('');
 
-                //check map has form field null value if any
-                if (!containsEmptyValue) {
-                  var userpasword = _formData['PASSWORD'];
-                  var cnfpswd = _formData['CONFIRM PASSWORD'];
-                  var username = _formData['EMAIL'];
-                  if (userpasword == cnfpswd) {
-                    registerStarted(username!, userpasword!, context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content:
-                            Text('password not match with confirm pasword')));
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Fill All Field first')));
+                if (containsEmptyValue) {
+                  ShowSnackBar.showCustomSnackbar(
+                      context, 'fill all Field First');
+                  return;
                 }
+                final userphoneno = ValidatePhoneNumber.onPhoneNumberChanged(
+                    _formData['PHONE NO']!);
+
+                if (!userphoneno.isRight()) {
+                  ShowSnackBar.showCustomSnackbar(
+                      context, 'Phone no Not Valid');
+                  return;
+                }
+
+                var userpasword = _formData['PASSWORD'];
+                var cnfpswd = _formData['CONFIRM PASSWORD'];
+                var username = _formData['EMAIL'];
+                if (userpasword != cnfpswd) {
+                  ShowSnackBar.showCustomSnackbar(
+                      context, 'password not match with confirm pasword');
+                  return;
+                }
+
+                registerStarted(username!, userpasword!, context);
+                //start registering
               },
             ),
           ],
         ),
-        bottomNavigationBar: const BottomText(),
+        bottomNavigationBar: BottomText(
+          title: 'Sign In',
+          description: 'Already have an account?',
+          callbackAction: () {
+            print('click on singin register scren');
+          },
+        ),
       ),
     );
   }
@@ -208,18 +224,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isTextFieldFocused_pswd = false; // Toggle focused state
       isTextFieldFocused_cnpswd = false; // Toggle focused state
 
+      // for (var focusNode in FocusNodesMap.focusNodesList) {
+      //   focusNode.unfocus();
+      // }
+
       FocusNodesMap.map['_focusNode_nm']!.unfocus(); // Toggle focused state
       FocusNodesMap.map['_focusNode_pn']!.unfocus(); // Toggle focused state
 
       FocusNodesMap.map['_focusNode_eml']!.unfocus(); // Toggle focused state
       FocusNodesMap.map['_focusNode_pswd']!.unfocus(); // Toggle focused state
-      FocusNodesMap.map['_focusNode_cnpswd']!.unfocus(); // Toggle focused state
+      FocusNodesMap.map['_focusNode_cnpswd']!.unfocus();
     });
   }
 
   void onTextFieldTap(String tapon) {
     // print(tapon);
     setState(() {
+      print(" ibtextfield Tap--$tapon");
       TextFieldFocusMap.map.forEach((key, value) {
         TextFieldFocusMap.map[key] = (key == tapon);
       });
@@ -250,7 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hintStyle: const TextStyle(
               color: Color(0xFFf3f3f4),
             ),
-            labelText: "NAME",
+            labelText: 'NAME',
             labelStyle:
                 TextStyle(color: const Color(0xFFf3f3f4), fontSize: 1.8.h)),
         onTap: () {
@@ -271,68 +292,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _validateName(FormFieldKey fieldKey, String value) {
-    //fieledkey male female etc
-    switch (fieldKey) {
-      case FormFieldKey.name:
-        if (value.isEmpty) {
-          setState(() {
-            _nameError = 'Name Field is requrid';
-          });
-        } else {
-          setState(() {
-            _nameError = '';
-          });
+    String error = ValidMap.errorMap[fieldKey] ?? '';
+    if (value == '') {
+      setState(() {
+        switch (fieldKey) {
+          case FormFieldKey.name:
+            _nameError = error;
+            break;
+          case FormFieldKey.email:
+            _emailError = error;
+            // Add email validation logic here
+            break;
+          case FormFieldKey.phone:
+            _phoneError = error;
+            // Add phone validation logic here
+            break;
+          case FormFieldKey.password:
+            _pswdError = error;
+            // Add password validation logic here
+            break;
+          case FormFieldKey.confirm_password:
+            _cnfrmError = error;
+            // Add confirm password validation logic here
+            break;
         }
-        break;
-      case FormFieldKey.email:
-        if (value.isEmpty) {
-          setState(() {
-            _emailError = 'Email Field is requrid';
-          });
-        } else {
-          setState(() {
-            _emailError = '';
-          });
-        }
-        // Add email validation logic here
-        break;
-      case FormFieldKey.phone:
-        if (value.isEmpty) {
-          setState(() {
-            _phoneError = 'Phone Field is requrid';
-          });
-        } else {
-          setState(() {
-            _phoneError = '';
-          });
-        }
-        // Add email validation logic here
-        break;
-      case FormFieldKey.password:
-        if (value.isEmpty) {
-          setState(() {
-            _pswdError = 'paswd Field is requrid';
-          });
-        } else {
-          setState(() {
-            _pswdError = '';
-          });
-        }
-        // Add password validation logic here
-        break;
-      case FormFieldKey.confirm_password:
-        if (value.isEmpty) {
-          setState(() {
-            _cnfrmError = 'confirmpswd Field is requrid';
-          });
-        } else {
-          setState(() {
-            _cnfrmError = '';
-          });
-        }
-        // Add password validation logic here
-        break;
-      // Add more cases for other form field keys as needed
+      });
+    } else {
+      setState(() {
+        _nameError = '';
+        _phoneError = '';
+        _emailError = '';
+        _pswdError = '';
+        _cnfrmError = '';
+      });
     }
   }
 
@@ -348,21 +340,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       width: double.infinity,
       child: TextFormField(
+        maxLength: 12,
+        keyboardType: TextInputType.number,
         key: FormKeysMap.map['user_phone_key'],
         focusNode: FocusNodesMap.map['_focusNode_pn']!,
         style: stylish,
         controller: TextEditingControllersMap.map['user_phone']!,
         decoration: InputDecoration(
-            border: InputBorder.none,
-            prefixIcon: PrefixIconData(
-                isTextFieldFocused: isTextFieldFocused_pn,
-                preIcon: Icons.person),
-            hintStyle: const TextStyle(
-              color: Color(0xFFf3f3f4),
-            ),
-            labelText: "PHONE NO",
-            labelStyle:
-                TextStyle(color: const Color(0xFFf3f3f4), fontSize: 1.8.h)),
+          border: InputBorder.none,
+          prefixIcon: PrefixIconData(
+              isTextFieldFocused: isTextFieldFocused_pn, preIcon: Icons.person),
+          hintStyle: const TextStyle(
+            color: Color(0xFFf3f3f4),
+          ),
+          labelText: 'PHONE NO',
+          labelStyle:
+              TextStyle(color: const Color(0xFFf3f3f4), fontSize: 1.8.h),
+          counterText: '', //overlappin hide after this
+        ),
         onTap: () {
           onTextFieldTap('PHONE NO');
         },
@@ -404,7 +399,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hintStyle: const TextStyle(
               color: Color(0xFFf3f3f4),
             ),
-            labelText: "EMAIL",
+            labelText: 'EMAIL',
             labelStyle:
                 TextStyle(color: const Color(0xFFf3f3f4), fontSize: 1.8.h)),
         onTap: () {
@@ -449,7 +444,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             hintStyle: const TextStyle(
               color: Color(0xFFf3f3f4),
             ),
-            labelText: "PASSWORD",
+            labelText: 'PASSWORD',
             labelStyle:
                 TextStyle(color: const Color(0xFFf3f3f4), fontSize: 1.8.h)),
         onTap: () {
@@ -518,27 +513,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void registerStarted(
       String username, String password, BuildContext context) async {
-    var users = await _auth
-        .registerUser(emailAddress: username, password: password)
-        .catchError((error) {
-      if (error is AuthException) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
-        throw error;
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.toString())));
-      }
-    });
-    if (kDebugMode) {
-      print(users!.email);
-    }
-    if (users!.email!.isNotEmpty) {
+    final users =
+        await _auth.registerUser(emailAddress: username, password: password);
+
+    users.fold(
+        (l) => ShowSnackBar.showCustomSnackbar(
+            context, l.toString()), //l denote left erorr
+        (r) {
       Navigator.push(
+          //r denote succes
           context,
           MaterialPageRoute(
             builder: (context) => const LoginScreen(),
           ));
-    }
+      //setRegistrationCompleteUsingSecured('ISREGISTER', 'true');
+
+      print(widget.preference.setBool('isRegistered', true));
+      // widget.preference.set
+    });
   }
 }

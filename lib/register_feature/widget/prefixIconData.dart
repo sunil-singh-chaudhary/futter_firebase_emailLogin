@@ -27,7 +27,7 @@ class PrefixIconData extends StatelessWidget {
             left: 10.0, // Align icon to the right
             child: Icon(
               preIcon,
-              color: Colors.white,
+              color: const Color(0xFF676472),
             ), // Icon to be placed as suffix
           ),
         ],

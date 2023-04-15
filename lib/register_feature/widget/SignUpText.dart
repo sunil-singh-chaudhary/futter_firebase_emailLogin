@@ -4,9 +4,11 @@ import 'package:sizer/sizer.dart';
 
 class sigUpText extends StatelessWidget {
   Function(BuildContext context) click_btn_callback;
+  String titletext;
   sigUpText({
     super.key,
     required this.click_btn_callback,
+    required this.titletext,
   });
 
   @override
@@ -28,7 +30,7 @@ class sigUpText extends StatelessWidget {
         },
         child: Center(
             child: Text(
-          'Sign Up',
+          titletext,
           style: TextStyle(
               color: Colors.black87,
               fontSize: 15.sp,

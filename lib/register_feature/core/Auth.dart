@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_first_demo/register_feature/core/AuthException.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:fpdart/fpdart.dart';
+
+typedef GetUserType = Future<Either<String?, User?>>;
 
 class Auth {
   late final _user;
@@ -16,7 +18,9 @@ class Auth {
   );
   final _auth = FirebaseAuth.instance;
   late final UserCredential user;
-  Future<User?> registerUser({emailAddress, password}) async {
+
+  GetUserType registerUser({emailAddress, password}) async {
+    //error handling new style
     try {
       final credential =
           await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -24,29 +28,42 @@ class Auth {
         password: password,
       );
       _user = credential.user!;
-      return _user;
+      return right(_user);
     } on FirebaseAuthException catch (e) {
-      rethrow;
+      if (e.code == 'user-not-found') {
+        return left('No user found for that email.');
+      } else if (e.code == 'wrong-password') {
+        return left('Wrong password provided for that user.');
+      } else if (e.code == 'invalid-email') {
+        return left('entered INvalid email');
+      } else {
+        return left(e.code);
+      }
     } catch (e) {
-      throw AuthException(e);
+      throw left(e.toString());
     }
   }
 
-  void LoginUsingEmail({emailAddress, password}) async {
+  GetUserType LoginUsingEmail({emailAddress, password}) async {
     try {
       final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: emailAddress, password: password);
       _login = credential.user;
+      return right(_login);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        if (kDebugMode) {
-          print('No user found for that email.');
-        }
+        return left('No user found for that email.');
       } else if (e.code == 'wrong-password') {
-        if (kDebugMode) {
-          print('Wrong password provided for that user.');
-        }
+        return left('Wrong password provided for that user.');
+      } else if (e.code == 'wrong-password') {
+        return left('Wrong password provided for that user.');
+      } else if (e.code == 'invalid-email') {
+        return left('entered INvalid email');
+      } else {
+        return left(e.code);
       }
+    } catch (e) {
+      throw left(e.toString());
     }
   }
 
