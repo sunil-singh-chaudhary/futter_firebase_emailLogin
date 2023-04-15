@@ -67,6 +67,15 @@ class Auth {
     }
   }
 
+  // Log out from Firebase
+  void signOut() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } on Exception catch (e) {
+      print('error_singOut-->${e.toString()}');
+    }
+  }
+
   Future<User?> googleButtonSignIn() async {
     try {
       GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();

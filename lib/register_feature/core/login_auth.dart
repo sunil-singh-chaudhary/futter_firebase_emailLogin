@@ -33,4 +33,10 @@ class LoginAuth {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLogin', true);
   }
+
+  void removeLoginDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLogin');
+    print(await prefs.remove('isLogin'));
+  }
 }
