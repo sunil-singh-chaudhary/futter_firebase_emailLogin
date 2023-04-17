@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../mainScreen/HomeScreen.dart';
 import '../firebase_options.dart';
@@ -26,13 +27,13 @@ class _GoogleLoginButtonState extends State<GoogleLoginButton> {
 
   @override
   Widget build(BuildContext context) {
-    Auth signIn = Auth();
+    final n_auth = context.read<Auth>();
 
     void getloginData() async {
       if (kDebugMode) {
         print('calling clik');
       }
-      final userinfo = await signIn.googleButtonSignIn();
+      final userinfo = await n_auth.googleButtonSignIn();
       if (userinfo!.uid.isEmpty) {
         if (kDebugMode) {
           print('Login ERRORR');

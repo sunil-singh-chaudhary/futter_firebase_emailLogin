@@ -10,6 +10,7 @@ import 'package:firebase_first_demo/register_feature/widget/SignUpText.dart';
 import 'package:firebase_first_demo/register_feature/widget/TextStylish.dart';
 import 'package:firebase_first_demo/register_feature/widget/prefixIconData.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 
@@ -34,8 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwrd_controller = TextEditingController();
   final emailFocusNode = CommonFocusNode(); //FocusNode Init
   final passwordFocusNode = CommonFocusNode();
-  final auth = Auth();
-  final loginauth = LoginAuth();
 
   final _loginDataMap = {};
 
@@ -52,6 +51,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nauth = context.read<Auth>();
+    final nloginauth = context.read<LoginAuth>();
     return Scaffold(
       backgroundColor: const Color(0XFF201a30),
       body: Column(
@@ -113,10 +114,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           context, 'fill all Field First');
                       return;
                     }
-                    loginauth.startLoginProcess(
+                    nloginauth.startLoginProcess(
                         context: context,
                         loginDataMap: _loginDataMap,
-                        auth: auth,
+                        auth: nauth,
                         email_controller: email_controller,
                         passwrd_controller: passwrd_controller);
                   },
