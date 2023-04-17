@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'SignUpUsingPHoneNumber.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -26,8 +28,17 @@ class _HomeScreenState extends State<HomeScreen> {
     //using flutte_bloc object access created on app start
     return Scaffold(
       appBar: AppBar(
-        title: Text(' Live Firebase Data'),
+        title: Text('Live Firebase Data'),
         actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SignUpUsingPHoneNumber(),
+                    ));
+              },
+              icon: Icon(Icons.phone_android)),
           IconButton(
             onPressed: () {
               nauth.signOut();

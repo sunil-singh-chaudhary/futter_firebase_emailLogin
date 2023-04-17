@@ -10,6 +10,8 @@ class Auth {
   late final _login;
   User? get users => _user;
   User? get login => _login;
+  String sendCode = '';
+
   final _googleSignIn = GoogleSignIn(
     scopes: <String>[
       'email',
@@ -22,8 +24,7 @@ class Auth {
   GetUserType registerUser({emailAddress, password}) async {
     //error handling new style
     try {
-      final credential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final credential = await _auth.createUserWithEmailAndPassword(
         email: emailAddress,
         password: password,
       );
@@ -46,8 +47,8 @@ class Auth {
 
   GetUserType LoginUsingEmail({emailAddress, password}) async {
     try {
-      final credential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: emailAddress, password: password);
+      final credential = await _auth.signInWithEmailAndPassword(
+          email: emailAddress, password: password);
       _login = credential.user;
       return right(_login);
     } on FirebaseAuthException catch (e) {
@@ -70,10 +71,41 @@ class Auth {
   // Log out from Firebase
   void signOut() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      await _auth.signOut();
     } on Exception catch (e) {
       print('error_singOut-->${e.toString()}');
     }
+  }
+
+  Future<void> loginUsingPhonenumber(String pHno) async {
+    await _auth.verifyPhoneNumber(
+      phoneNumber: pHno,
+      timeout: const Duration(seconds: 120),
+      verificationCompleted: (phoneAuthCredential) async {
+        await _auth.signInWithCredential(phoneAuthCredential);
+      },
+      verificationFailed: (error) {
+        print('error is-->$error.toString()');
+      },
+      codeSent: (verificationId, forceResendingToken) {
+        sendCode = verificationId;
+        print('sendcode==> $sendCode');
+      },
+      codeAutoRetrievalTimeout: (verificationId) {
+        sendCode = verificationId;
+      },
+    );
+  }
+
+  Future<bool> verifyOTP(String OTP) async {
+    late var credential;
+    try {
+      credential = await _auth.signInWithCredential(
+          PhoneAuthProvider.credential(verificationId: sendCode, smsCode: OTP));
+    } on FirebaseAuthException catch (exception) {
+      print('OTP failed: ${exception.message}');
+    }
+    return credential.user != null ? true : false;
   }
 
   Future<User?> googleButtonSignIn() async {
